@@ -1,0 +1,9 @@
+#!/bin/bash
+if [ -f $1 ]; then
+	echo $1 already exists.
+else
+	cat ~/bin/newGEHead > $1
+	chmod +x $1
+fi
+
+vim $1

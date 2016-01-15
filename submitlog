@@ -1,0 +1,128 @@
+#!/usr/bin/env python3
+import warnings
+import subprocess
+import os
+import shlex
+import sys
+import argparse
+import time
+parser = argparse.ArgumentParser(description='submit a job and log it.')
+parser.add_argument('-q',dest='queue',	metavar='<queue>',help='run queue {long|short}', required=False, default="long");
+parser.add_argument('-e',dest='errFP', metavar='<errFile>',help='Where to output stderr [default=stdout]', required=False);
+parser.add_argument('-o',dest='outFP', metavar='<outFile>',help='Where to output stdout ', required=True);
+parser.add_argument('-m',dest='memory', metavar='<memory>',help='RAM required (in GB)', required=False);
+parser.add_argument('-t',dest='tasks', metavar='<tasks>',help='tasks for GE - either a file with one task per line or 1-<nTasks>', required=False);
+#parser.add_argument('-s',dest='swap', metavar='<swap>',help='swap memory required (in GB)', required=False);
+#parser.add_argument('-temp',dest='temp', metavar='<temp>',help='temp memory required (in GB)', required=False);
+#parser.add_argument('-or',dest='otherRes', metavar='<otherRes>',help='other resources required', required=False);
+parser.add_argument('-op',dest='otherParam', metavar='<otherParam>',help='other qsub parameters, in quotes', required=False);
+#parser.add_argument('-t',dest='runtime', metavar='<runtime>',help='runtime required (in hours)', required=False);
+parser.add_argument('-P',dest='project', metavar='<project>',help='project [default="test"]', required=False);
+parser.add_argument('-p',dest='priority', metavar='<priority>',help='priority from -1023 to 0, with - being lower priority (default 0)', required=False);
+parser.add_argument('-N',dest='name', metavar='<name>',help='the job name', required=False);
+parser.add_argument('-hosts',dest='hosts', metavar='<hosts>',help='server hosts, comma separated', required=False);
+#parser.add_argument('-exclhosts',dest='exclhosts', metavar='<hosts>',help='exclude these server hosts, comma separated', required=False);
+parser.add_argument('-n',dest='threads', metavar='<threads>',help='CPU threads', required=False);
+#parser.add_argument('-r',dest='rusage', metavar='<rusage>',help='Other rusage parameters,separated by semicolons', required=False);
+parser.add_argument('-v',dest='verbose', action='count',help='Verbose output?', required=False, default=0);
+parser.add_argument('command', metavar="<command>", nargs="+",help='The command to be run');
+
+args = parser.parse_args();
+
+arguments = " -b y -cwd ";
+
+
+arguments+= " -q "+args.queue
+arguments+= " -o "+args.outFP
+
+if args.project is not None:
+	arguments+= " -P "+args.project
+
+resources =[];
+
+#if args.exclhosts is not None: #TODO
+#	resources += "-'"+"'-'".join(args.exclhosts.split(","))+"'"
+if args.hosts is not None:
+	resources.append("hostname=%s"%(args.hosts));
+
+if args.memory is not None:
+	resources.append("m_mem_free=%sg"%(args.memory))
+
+if resources:
+	arguments+=" -l %s"%(":".join(resources))
+
+if args.errFP is not None:
+	arguments+=" -e "+args.errFP
+else:
+	arguments+=" -e "+args.outFP
+
+if args.threads is not None:
+	arguments+=" -pe smp %s"%(args.threads);
+
+if args.otherParam is not None:
+	arguments+= args.otherParam
+
+if args.name is not None:
+	arguments+= " -N %s"%(args.name);
+else:
+	arguments+= " -N {script}".format(script=shlex.quote(" ".join(args.command)[0:40].replace("/",".").replace("*",".")))
+if args.priority is not None:
+	arguments+= " -p %s"%(args.priority);
+
+if args.tasks is not None:
+	try:
+		curF = open(args.tasks,"r");
+		i=0;
+		for line in curF:
+			i+=1
+		args.tasks = "1-%i"%(i)
+	except IOError as e:
+		pass;
+	arguments+= " -t %s"%(args.tasks);
+
+if args.tasks is None:
+	command=" ".join(args.command)
+	comPath =args.outFP+".sh"
+	if comPath[0:1]!="/" and comPath[0:1]!="~":
+		comPath="./"+comPath;
+	comFile = open(comPath,"w");
+	comFile.write("#!/bin/bash -l\n");
+	useCommands = subprocess.check_output("source /broad/software/scripts/useuse; use -a |  sed -n '/^Packages in use:$/ { s///; :a; n; p; ba; }' | sed 's/ \+/use /' |  sed -e :a -e 'N;s/[\\n]/; /;ta'", stderr=subprocess.STDOUT,shell=True, universal_newlines=True)
+	#useCommands = useCommands.rstrip();
+	#print(str(useCommands))
+	comFile.write(useCommands);
+	comFile.write("echo Job $JOB_ID started on $HOST: `date`\n");
+	comFile.write(command+"\n");
+	comFile.write("echo Job finished: `date`\n");
+	comFile.close();
+	os.chmod(comPath,511)
+	#comStr="qsub %s \"source  /broad/software/scripts/useuse; %s\" %s"%(arguments, useCommands, command);
+	comStr="qsub %s %s"%(arguments, comPath);
+else:
+	command="{script}".format(script=shlex.quote(" ".join(args.command)))
+	comStr="qsub %s %s"%(arguments, command);
+#comStr="qsub %s \"/bin/bash -l ; %s\" %s"%(arguments, useCommands, command);
+#print(comStr)
+failed=0;
+notSub=True
+try:
+	result = subprocess.check_output(comStr, stderr=subprocess.STDOUT,shell=True, universal_newlines=True)
+	notSub=False;
+except subprocess.CalledProcessError as e:
+	print("%s\n%s\nCalledProcessError #%d %d: %s\n\n"%(time.strftime("%c"),comStr,failed,e.returncode,e.output));
+	raise e;
+except Exception as e:
+	print("%s\nOther Exception #%d\n%s\n%s\n\n"%(time.strftime("%c"),failed,comStr,str(e)));
+	raise e;
+result=result.rstrip()
+centralLog ='/home/unix/cgdeboer/CentralSubmitLog.log';
+sys.argv[0] = os.path.split(sys.argv[0])[1]
+sublogCall=" ".join([shlex.quote(e) for e in sys.argv]);
+outFile = open(centralLog,'a');
+outFile.write("\n%s\n%s\n%s\n%s\n%s\n"%(time.strftime("%c"),os.getcwd(),sublogCall,comStr,result));
+outFile.close();
+
+outFile = open("submitlog.log","a");
+outFile.write("\n%s\n%s\n%s\n%s\n%s\n"%(time.strftime("%c"),os.getcwd(),sublogCall,comStr,result));
+outFile.close();
+print(result);
