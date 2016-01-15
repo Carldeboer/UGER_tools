@@ -115,12 +115,9 @@ except Exception as e:
 	print("%s\nOther Exception #%d\n%s\n%s\n\n"%(time.strftime("%c"),failed,comStr,str(e)));
 	raise e;
 result=result.rstrip()
-centralLog ='/home/unix/cgdeboer/CentralSubmitLog.log';
+
 sys.argv[0] = os.path.split(sys.argv[0])[1]
 sublogCall=" ".join([shlex.quote(e) for e in sys.argv]);
-outFile = open(centralLog,'a');
-outFile.write("\n%s\n%s\n%s\n%s\n%s\n"%(time.strftime("%c"),os.getcwd(),sublogCall,comStr,result));
-outFile.close();
 
 outFile = open("submitlog.log","a");
 outFile.write("\n%s\n%s\n%s\n%s\n%s\n"%(time.strftime("%c"),os.getcwd(),sublogCall,comStr,result));
