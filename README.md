@@ -15,7 +15,9 @@ and then you can create a shortcut (link) to your bin: `ln -s <pathToEachScriptF
 
 You can also either copy or move them to your bin.  Only the files `newGEArrayJob`, `newGEHead`, and `submitlog` are needed.
 
-Submitlog uses python and you may need to install some of the scripts dependencies.
+Your bin is `~/bin/.`. 
+
+Submitlog uses python and you may need to install some of the scripts dependencies, including [argparse](https://pypi.python.org/pypi/argparse).  On the cluster, you must install all packages locally (i.e. using the `python setup.py install `**`--prefix ~/.local/`** option).  You then would also need to include this install location in PYTHONPATH (i.e. put `export PYTHONPATH=$HOME/.local/lib` in your `~/.my.bashrc` file and re-login.
 
 # `submitlog`
 This is a general use script and comes with the following options:
