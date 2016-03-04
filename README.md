@@ -19,6 +19,19 @@ Your bin is `~/bin/.`.
 
 Submitlog uses python and you may need to install some of the scripts dependencies, including [argparse](https://pypi.python.org/pypi/argparse).  On the cluster, you must install all packages locally (i.e. using the `python setup.py install `**`--prefix ~/.local/`** option).  You then would also need to include this install location in PYTHONPATH (i.e. put `export PYTHONPATH=$HOME/.local/lib` in your `~/.my.bashrc` file and re-login.
 
+## Dedicated resources
+
+
+If you have dedicated resources that you can access and you want to make using them default, you should customize submitlog to use it by modifying the line:
+```parser.add_argument('-P',dest='project', metavar='<project>',help='project [default=""]', required=False, default = "");```
+
+to 
+
+```parser.add_argument('-P',dest='project', metavar='<project>',help='project [default="myDedicatedQueue"]', required=False, default = "myDedicatedQueue");```
+
+where `myDedicatedQueue` is the name of the dedicated resources.
+
+
 # `submitlog`
 This is a general use script and comes with the following options:
 ```
