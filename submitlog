@@ -17,7 +17,7 @@ parser.add_argument('-t',dest='tasks', metavar='<tasks>',help='tasks for GE - ei
 #parser.add_argument('-or',dest='otherRes', metavar='<otherRes>',help='other resources required', required=False);
 parser.add_argument('-op',dest='otherParam', metavar='<otherParam>',help='other qsub parameters, in quotes', required=False);
 #parser.add_argument('-t',dest='runtime', metavar='<runtime>',help='runtime required (in hours)', required=False);
-parser.add_argument('-P',dest='project', metavar='<project>',help='project [default="test"]', required=False);
+parser.add_argument('-P',dest='project', metavar='<project>',help='project [default=""]', required=False, default = "");
 parser.add_argument('-p',dest='priority', metavar='<priority>',help='priority from -1023 to 0, with - being lower priority (default 0)', required=False);
 parser.add_argument('-N',dest='name', metavar='<name>',help='the job name', required=False);
 parser.add_argument('-hosts',dest='hosts', metavar='<hosts>',help='server hosts, comma separated', required=False);
@@ -35,7 +35,7 @@ arguments = " -b y -cwd ";
 arguments+= " -q "+args.queue
 arguments+= " -o "+args.outFP
 
-if args.project is not None:
+if args.project!="":
 	arguments+= " -P "+args.project
 
 resources =[];
