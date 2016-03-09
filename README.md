@@ -17,7 +17,7 @@ You can also either copy or move them to your bin.  Only the files `newGEArrayJo
 
 Your bin is `~/bin/.`. 
 
-Submitlog uses python and you may need to install some of the scripts dependencies, including [argparse](https://pypi.python.org/pypi/argparse).  On the cluster, you must install all packages locally (i.e. using the `python setup.py install `**`--prefix ~/.local/`** option).  You then would also need to include this install location in PYTHONPATH (i.e. put `export PYTHONPATH=$HOME/.local/lib` in your `~/.my.bashrc` file and re-login.
+Submitlog uses python3 and you may need to install some of the scripts dependencies, including [argparse](https://pypi.python.org/pypi/argparse).  On the cluster, you must install all packages locally (i.e. using the `python3 setup.py install `**`--user`**).  You then would also need to include this install location in PYTHONPATH (i.e. put `export PYTHONPATH=$HOME/.local/lib` in your `~/.my.bashrc` file and re-login.
 
 ## Dedicated resources
 
