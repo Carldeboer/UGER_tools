@@ -1,0 +1,4 @@
+watch -n 10 qstat \| grep cgdeboe
+qstat | grep cgdeboe
+#watch -n 10 bjobs \| grep cgdeboe
+#bjobs | grep cgdeboe

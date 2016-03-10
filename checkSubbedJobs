@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ $# -eq 1 ]; then
+	qstat | grep -P "^ *(`grep ") has been submitted" $1  |tail -n 500 |sed  's/.*Your job\(-array\)\? \([0-9]\+\).*/\2/g' | sed -e :a -e 'N;s/\n/|/;ta'`)"
+else
+	if [ -a submitlog.log ]; then
+		echo "submitlog:" 
+		qstat | grep -P "^ *(`grep ") has been submitted" submitlog.log  |tail -n 500 |sed  's/.*Your job\(-array\)\? \([0-9]\+\).*/\2/g' | sed -e :a -e 'N;s/\n/|/;ta'`)"
+	fi
+fi
