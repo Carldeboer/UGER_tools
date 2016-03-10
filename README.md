@@ -8,16 +8,19 @@ This tool set is comprised of two tools:
 
 `newGEArrayJob` simply sets up a new batch file to run an array job.
 
+`csj` watches the status of the jobs submitted from the current directory, refreshing every 2 seconds (using qstat)
 
 # Installation
 Simply `git clone <thisURL>` to download
 and then you can create a shortcut (link) to your bin: `ln -s <pathToEachScriptFile> <pathToYourBin>`
 
-You can also either copy or move them to your bin.  Only the files `newGEArrayJob`, `newGEHead`, and `submitlog` are needed.
+You can also either copy or move them to your bin.  Only the files `newGEArrayJob`, `newGEHead`, `csj`, `checkSubbedJobs`, and `submitlog` are needed.
 
 Your bin is `~/bin/.`. 
 
 Submitlog uses python3 and you may need to install some of the scripts dependencies, including [argparse](https://pypi.python.org/pypi/argparse).  On the cluster, you must install all packages locally (i.e. using the `python3 setup.py install `**`--user`**).  You then would also need to include this install location in PYTHONPATH (i.e. put `export PYTHONPATH=$HOME/.local/lib` in your `~/.my.bashrc` file and re-login.
+
+On the Broad cluster, you can simply type `use Python-3.4` to enable python3 and run submitlog. Note that at present this overrides the previous usage of other python versions.  To circumvent this, I installed python 3 locally and so python is python 2.7, while python3 is python 3.3.
 
 ## Dedicated resources
 
@@ -280,3 +283,6 @@ submitlog -q short -m 1 -o doExample2.olog -t tasksNamesOutsTimes.txt ./echoNTim
 qsub  -b y -cwd  -q short -o doExample2.olog -l m_mem_free=1g -e doExample2.olog -N '..echoNTimes.sh tasksNamesOutsTimes.txt' -t 1-4 './echoNTimes.sh tasksNamesOutsTimes.txt'
 Your job-array 908516.1-4:1 ("..echoNTimes.sh tasksNamesOutsTimes.txt") has been submitted
 ```
+
+#`csj` and `checkSubbedJobs`
+`checkSubbedJobs` shows the current submitted jobs (running/queued) that were submitted from the current directory (it looks for them in ./submitlog.log). `csj` uses `checkSubbedJobs` to show the current running/queued jobs, refreshing every 2 seconds.  I almost never use `checkSubbedJobs` directly.
