@@ -20,7 +20,7 @@ Your bin is `~/bin/.`.
 
 Submitlog uses python3 and you may need to install some of the scripts dependencies, including [argparse](https://pypi.python.org/pypi/argparse).  On the cluster, you must install all packages locally (i.e. using the `python3 setup.py install `**`--user`**).  You then would also need to include this install location in PYTHONPATH (i.e. put `export PYTHONPATH=$HOME/.local/lib` in your `~/.my.bashrc` file and re-login.
 
-On the Broad cluster, you can simply type `use Python-3.4` to enable python3 and run submitlog. If you also use python < 3 (e.g. 2.7), you can instead `use Anaconda` and, at the time of writing, `python` will then refer to python 2.7, while `python3` will refer to python 3.5.
+On the Broad cluster, you can simply type `use Python-3.4` to enable python3 and run submitlog. If you also use python < 3 (e.g. 2.7), you should instead include both `use .anaconda3-2.5.0` and  `use Python-2.7` *in that order* in your login script (`~/.my.bashrc`).  The reason for this is that if `use .anaconda3-2.5.0` is run after `use Python-2.7`, the anaconda `python` will be a higher priority in your `$PATH`, which is actually python 3. `submitlog` assumes that the order of uses doesn't matter, which in this case is not true, so that is why you should include it in the login script which is run before any of the `use` commands made by `submitlog`.
 
 ## Dedicated resources
 
