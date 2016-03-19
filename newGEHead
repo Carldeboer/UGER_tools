@@ -11,7 +11,7 @@ echo  $SGE_TASK_ID : $id #print the current task to the primary output log
 export logDir="" #fill this in with where you would like the output logs to go - this directory must actually exist.
 exec 1>>$logDir/$id.olog # redirect standard out to an output log file based off of this task ID
 exec 2>&1 #redirect stderr to stdout
-set -e #make it so that the script exits completely if one task fails
+set -e #make it so that the script exits completely if one command fails
 
 if [ ! -e $logDir/$id.done ] #makes sure the stuff after "then" is only run if the job was not completed last time.
 then
