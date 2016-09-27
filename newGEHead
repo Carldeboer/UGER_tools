@@ -9,19 +9,21 @@ export id=`awk "NR==$SGE_TASK_ID" $1`
 #export id=${splitID[0]}
 echo  $SGE_TASK_ID : $id
 #redirect stdout and stderr to file
-export logDir=""
-exec 1>>$logDir/$id.olog
+export logDir="."
+export logPre=$logDir/$id
+exec 1>>$logPre.olog
 exec 2>&1
 set -e
 
 
-if [ ! -e $logDir/$id.done ]
+if [ ! -e $logPre.done ]
 then
 	echo Job $JOB_ID:$SGE_TASK_ID started on $HOST: `date`
 	#PLACE COMMANDS HERE
 
-	touch $logDir/$id.done
+	touch $logPre.done
 	echo Job finished: `date`
 else
-	echo Job already done. To redo, rm $logDir/$id.done
+	echo Job already done. To redo, rm $logPre.done
 fi
+qstat -j $JOB_ID | grep "^usage *$SGE_TASK_ID:"

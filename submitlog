@@ -17,7 +17,7 @@ parser.add_argument('-t',dest='tasks', metavar='<tasks>',help='tasks for GE - ei
 #parser.add_argument('-or',dest='otherRes', metavar='<otherRes>',help='other resources required', required=False);
 parser.add_argument('-op',dest='otherParam', metavar='<otherParam>',help='other qsub parameters, in quotes', required=False);
 #parser.add_argument('-t',dest='runtime', metavar='<runtime>',help='runtime required (in hours)', required=False);
-parser.add_argument('-P',dest='project', metavar='<project>',help='project [default=""]', required=False, default = "");
+parser.add_argument('-P',dest='project', metavar='<project>',help='project [default=""]', required=False, default="");
 parser.add_argument('-p',dest='priority', metavar='<priority>',help='priority from -1023 to 0, with - being lower priority (default 0)', required=False);
 parser.add_argument('-N',dest='name', metavar='<name>',help='the job name', required=False);
 parser.add_argument('-hosts',dest='hosts', metavar='<hosts>',help='server hosts, comma separated', required=False);
@@ -26,7 +26,6 @@ parser.add_argument('-n',dest='threads', metavar='<threads>',help='CPU threads',
 #parser.add_argument('-r',dest='rusage', metavar='<rusage>',help='Other rusage parameters,separated by semicolons', required=False);
 parser.add_argument('-v',dest='verbose', action='count',help='Verbose output?', required=False, default=0);
 parser.add_argument('command', metavar="<command>", nargs="+",help='The command to be run');
-
 args = parser.parse_args();
 
 arguments = " -b y -cwd ";
@@ -35,7 +34,7 @@ arguments = " -b y -cwd ";
 arguments+= " -q "+args.queue
 arguments+= " -o "+args.outFP
 
-if args.project!="":
+if args.project is not None:
 	arguments+= " -P "+args.project
 
 resources =[];
@@ -46,7 +45,8 @@ if args.hosts is not None:
 	resources.append("hostname=%s"%(args.hosts));
 
 if args.memory is not None:
-	resources.append("m_mem_free=%sg"%(args.memory))
+	#resources.append("m_mem_free=%sg"%(args.memory))
+	resources.append("h_vmem=%sg"%(args.memory))
 
 if resources:
 	arguments+=" -l %s"%(":".join(resources))
@@ -65,7 +65,7 @@ if args.otherParam is not None:
 if args.name is not None:
 	arguments+= " -N %s"%(args.name);
 else:
-	arguments+= " -N {script}".format(script=shlex.quote(" ".join(args.command)[0:40].replace("/",".").replace("*",".")))
+	arguments+= " -N {script}".format(script=shlex.quote(" ".join(args.command)[0:40].replace("/",".").replace(":",".").replace("*",".").replace("\\",".")))
 if args.priority is not None:
 	arguments+= " -p %s"%(args.priority);
 
@@ -94,6 +94,7 @@ if args.tasks is None:
 	comFile.write("echo Job $JOB_ID started on $HOST: `date`\n");
 	comFile.write(command+"\n");
 	comFile.write("echo Job finished: `date`\n");
+	comFile.write("qstat -j $JOB_ID | grep \"^usage\"");
 	comFile.close();
 	os.chmod(comPath,511)
 	#comStr="qsub %s \"source  /broad/software/scripts/useuse; %s\" %s"%(arguments, useCommands, command);
