@@ -1,0 +1,2 @@
+#!/bin/bash
+diff <(ls $1/*.done -1 | sed 's/done//g')  <(ls $1/*.olog -1 | sed 's/olog//g') | grep "^>" | sed 's/> \(.*\)/\1olog/g'
