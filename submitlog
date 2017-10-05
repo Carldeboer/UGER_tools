@@ -7,22 +7,26 @@ import sys
 import argparse
 import time
 parser = argparse.ArgumentParser(description='submit a job and log it.')
-parser.add_argument('-q',dest='queue',	metavar='<queue>',help='run queue {long|short}', required=False, default="long");
+#parser.add_argument('-q',dest='queue',	metavar='<queue>',help='run queue {long|short}', required=False, default="long");
+parser.add_argument('-q',dest='queue',	metavar='<queue>',help='run queue {broad}', required=False, default="broad");
 parser.add_argument('-e',dest='errFP', metavar='<errFile>',help='Where to output stderr [default=stdout]', required=False);
 parser.add_argument('-o',dest='outFP', metavar='<outFile>',help='Where to output stdout ', required=True);
 parser.add_argument('-m',dest='memory', metavar='<memory>',help='RAM required (in GB)', required=False);
+parser.add_argument('-l',dest='runtime', metavar='<runtime>',help='hard-kill job runtime (in hours) [default=99]', required=False, default="99");
 parser.add_argument('-t',dest='tasks', metavar='<tasks>',help='tasks for GE - either a file with one task per line or 1-<nTasks>', required=False);
 #parser.add_argument('-s',dest='swap', metavar='<swap>',help='swap memory required (in GB)', required=False);
 #parser.add_argument('-temp',dest='temp', metavar='<temp>',help='temp memory required (in GB)', required=False);
 #parser.add_argument('-or',dest='otherRes', metavar='<otherRes>',help='other resources required', required=False);
 parser.add_argument('-op',dest='otherParam', metavar='<otherParam>',help='other qsub parameters, in quotes', required=False);
+parser.add_argument('-wf',dest='waitFor', metavar='<waitFor>',help='wait for these jids to finish, comma separated', required=False);
 #parser.add_argument('-t',dest='runtime', metavar='<runtime>',help='runtime required (in hours)', required=False);
-parser.add_argument('-P',dest='project', metavar='<project>',help='project [default=""]', required=False, default="");
+parser.add_argument('-P',dest='project', metavar='<project>',help='project [default=""]', required=False, default=""); #choose some appropriate project
 parser.add_argument('-p',dest='priority', metavar='<priority>',help='priority from -1023 to 0, with - being lower priority (default 0)', required=False);
 parser.add_argument('-N',dest='name', metavar='<name>',help='the job name', required=False);
 parser.add_argument('-hosts',dest='hosts', metavar='<hosts>',help='server hosts, comma separated', required=False);
 #parser.add_argument('-exclhosts',dest='exclhosts', metavar='<hosts>',help='exclude these server hosts, comma separated', required=False);
 parser.add_argument('-n',dest='threads', metavar='<threads>',help='CPU threads', required=False);
+parser.add_argument('-g',dest='gpus', metavar='<gpus>',help='GPUs requested', required=False);
 #parser.add_argument('-r',dest='rusage', metavar='<rusage>',help='Other rusage parameters,separated by semicolons', required=False);
 parser.add_argument('-v',dest='verbose', action='count',help='Verbose output?', required=False, default=0);
 parser.add_argument('command', metavar="<command>", nargs="+",help='The command to be run');
@@ -31,11 +35,8 @@ args = parser.parse_args();
 arguments = " -b y -cwd ";
 
 
-arguments+= " -q "+args.queue
 arguments+= " -o "+args.outFP
 
-if args.project is not None:
-	arguments+= " -P "+args.project
 
 resources =[];
 
@@ -48,13 +49,29 @@ if args.memory is not None:
 	#resources.append("m_mem_free=%sg"%(args.memory))
 	resources.append("h_vmem=%sg"%(args.memory))
 
+#Oct 3rd, implement
+#if args.runtime is not None:
+#	resources.append("h_rt=%s:00:00"%(args.runtime))
+
 if resources:
-	arguments+=" -l %s"%(":".join(resources))
+	arguments+=" -l %s"%(",".join(resources))
 
 if args.errFP is not None:
 	arguments+=" -e "+args.errFP
 else:
 	arguments+=" -e "+args.outFP
+extraLogCommands = ""
+if args.gpus is not None: #this is only available on certain systems and uses UGES where I am.
+	arguments+=" -l gpu=%s"%(args.gpus);
+	arguments+= " -q APPROPRIATEQUEUE"
+	extraLogCommands+="echo Assigned $SGE_HGR_gpu, using CUDA_VD: $CUDA_VISIBLE_DEVICES\n"
+else:
+	arguments+= " -q "+args.queue
+	if args.project is not None:
+		arguments+= " -P "+args.project
+	
+if args.waitFor is not None:
+	arguments+=" -hold_jid %s"%(args.waitFor);
 
 if args.threads is not None:
 	arguments+=" -pe smp %s"%(args.threads);
@@ -92,6 +109,7 @@ if args.tasks is None:
 	#print(str(useCommands))
 	comFile.write(useCommands);
 	comFile.write("echo Job $JOB_ID started on $HOST: `date`\n");
+	comFile.write(extraLogCommands);
 	comFile.write(command+"\n");
 	comFile.write("echo Job finished: `date`\n");
 	comFile.write("qstat -j $JOB_ID | grep \"^usage\"");
