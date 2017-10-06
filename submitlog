@@ -50,8 +50,8 @@ if args.memory is not None:
 	resources.append("h_vmem=%sg"%(args.memory))
 
 #Oct 3rd, implement
-#if args.runtime is not None:
-#	resources.append("h_rt=%s:00:00"%(args.runtime))
+if args.runtime is not None:
+	resources.append("h_rt=%s:00:00"%(args.runtime))
 
 if resources:
 	arguments+=" -l %s"%(",".join(resources))
